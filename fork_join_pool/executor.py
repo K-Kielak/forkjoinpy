@@ -3,22 +3,19 @@ from __future__ import annotations
 from collections import deque
 from threading import Lock, Semaphore, Thread
 from types import TracebackType
-from typing import Callable, Any, Optional, Type, Deque, Tuple
+from typing import Optional, Type, Deque
 
 from fork_join_pool.logger import get_logger
+from fork_join_pool.task import ForkJoinPoolTask
 
 logger = get_logger()
 
 
-AnyFunction = Callable[[Any, ...], Any]
-AnyArgs = Tuple[Any, ...]
-
-
-class ThreadPoolExecutor:
+class ForkJoinPoolExecutor:
     def __init__(self, n_workers):
         self.n_workers = n_workers
 
-        self._task_queue: Deque[Tuple[AnyFunction, AnyArgs]] = deque()
+        self._task_queue: Deque[ForkJoinPoolTask] = deque()
         self._tasks_lock = Lock()
         self._queue_elements = Semaphore()
         self._no_more_tasks = Lock()
@@ -26,7 +23,7 @@ class ThreadPoolExecutor:
 
         self._is_active = False
 
-    def __enter__(self) -> ThreadPoolExecutor:
+    def __enter__(self) -> ForkJoinPoolExecutor:
         self._is_active = True
         self._threads = [
             Thread(target=self._run_worker, args=[i]) for i in range(self.n_workers)
@@ -55,12 +52,13 @@ class ThreadPoolExecutor:
 
         return False
 
-    def add_task(self, task: AnyFunction, *args: AnyArgs) -> None:
+    def add_task(self, task: ForkJoinPoolTask) -> None:
         with self._tasks_lock:
             if len(self._task_queue) == 0:
                 self._no_more_tasks.acquire()
 
-            self._task_queue.append((task, args))
+            task.set_add_task_to_pool_fn(self.add_task)
+            self._task_queue.append(task)
             self._queue_elements.release()
 
     def _run_worker(self, task_id: int) -> None:
@@ -71,9 +69,11 @@ class ThreadPoolExecutor:
                 return
 
             with self._tasks_lock:
-                task, args = self._task_queue.popleft()
+                task = self._task_queue.popleft()
                 if len(self._task_queue) == 0:
                     self._no_more_tasks.release()
 
-            logger.debug(f"Thread pool worker {task_id} starts new task")
-            task(*args)
+            if task.started.acquire(blocking=False):
+                logger.debug(f"Thread pool worker {task_id} starts new task")
+                task.result = task.compute()
+                task.done = True
