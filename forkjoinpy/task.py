@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from threading import Lock
 from typing import TypeVar, Generic, Optional, List, Callable
 
-from fork_join_pool.global_counter import counter
-from fork_join_pool.logger import get_logger
+from forkjoinpy.global_counter import counter
+from forkjoinpy.logger import get_logger
 
 
 T = TypeVar("T")

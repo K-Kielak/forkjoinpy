@@ -3,8 +3,8 @@ from threading import Lock
 
 import pytest
 
-from fork_join_pool.executor import ForkJoinPoolExecutor
-from fork_join_pool.task import ForkJoinPoolTask, T
+from forkjoinpy.executor import ForkJoinPoolExecutor
+from forkjoinpy.task import ForkJoinPoolTask, T
 
 COUNTER_INCREMENTS = 100
 SLEEP_TIME = 0.001

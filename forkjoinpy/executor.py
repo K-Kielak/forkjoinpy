@@ -5,8 +5,8 @@ from threading import Lock, Semaphore, Thread
 from types import TracebackType
 from typing import Optional, Type, Deque
 
-from fork_join_pool.logger import get_logger
-from fork_join_pool.task import ForkJoinPoolTask
+from forkjoinpy.logger import get_logger
+from forkjoinpy.task import ForkJoinPoolTask
 
 logger = get_logger()
 
