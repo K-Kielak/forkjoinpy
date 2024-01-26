@@ -1,3 +1,6 @@
+"""
+Used primarily for debugging/logging purposes
+"""
 from threading import Lock
 
 
