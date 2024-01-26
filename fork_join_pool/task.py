@@ -18,7 +18,7 @@ LOGGER = get_logger()
 
 class ForkJoinPoolTask(ABC, Generic[T]):
     def __init__(self):
-        self.id = counter.get_new()
+        self.task_id = counter.get_new()
 
         self._todo_deque: Deque[T] = deque()
         self._deque_lock = Lock()
@@ -32,12 +32,12 @@ class ForkJoinPoolTask(ABC, Generic[T]):
         pass
 
     def fork(self, *tasks: Tuple[ForkJoinPoolTask, ...]) -> None:
-        LOGGER.debug(f"Forking {[t.id for t in tasks]} inside of {self.id}")
+        LOGGER.debug(f"Forking {[t.task_id for t in tasks]} inside of {self.task_id}")
         with self._deque_lock:
             self._todo_deque.extend(tasks)
 
     def join(self) -> T:
-        LOGGER.debug(f"Joining {self.id}")
+        LOGGER.debug(f"Joining {self.task_id}")
         with self._result_lock:
             if not self._done:
                 self._result = self.compute()
@@ -51,5 +51,3 @@ def release_potentially_free_lock(lock: Lock) -> None:
         lock.release()
     except RuntimeError:
         pass  # Turns out lock was free
-
-
