@@ -1,6 +1,6 @@
 import pytest
 
-from fork_join_pool import ForkJoinPoolTask
+from fork_join_pool.task import ForkJoinPoolTask
 
 
 # Create simple fibonacci task for testing
